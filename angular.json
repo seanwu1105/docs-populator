@@ -86,6 +86,11 @@
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
             "inlineStyleLanguage": "scss",
+            "codeCoverage": true,
+            "codeCoverageExclude": [
+              "src/**/mock-*.ts",
+              "src/**/*-testing.*.ts"
+            ],
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": ["src/styles.scss"],
             "scripts": []
