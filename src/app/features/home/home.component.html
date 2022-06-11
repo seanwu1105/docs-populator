@@ -1,0 +1,39 @@
+<mat-toolbar>
+  <span>Docs Populator</span>
+</mat-toolbar>
+
+<mat-drawer-container autosize>
+  <mat-drawer #drawer mode="side" opened [disableClose]="true">
+    <div class="section">
+      <h3>Data</h3>
+      <input
+        type="file"
+        accept=".csv"
+        #dataInput
+        (change)="onDataChange($event)"
+      />
+      <button (click)="dataInput.click()" mat-flat-button color="primary">
+        Import Data
+      </button>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="section">
+      <h3>Template</h3>
+      <input
+        type="file"
+        accept=".html"
+        #templateInput
+        (change)="onTemplateChange($event)"
+      />
+      <button (click)="templateInput.click()" mat-flat-button color="primary">
+        Import Template
+      </button>
+    </div>
+  </mat-drawer>
+
+  <div class="content">
+    <object data="assets/dummy.pdf" type="application/pdf"></object>
+  </div>
+</mat-drawer-container>
