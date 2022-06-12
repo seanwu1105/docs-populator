@@ -34,6 +34,10 @@
   </mat-drawer>
 
   <div class="content">
-    <object data="assets/dummy.pdf" type="application/pdf"></object>
+    <object
+      *ngIf="pdf$ | async as pdf"
+      [data]="pdf"
+      type="application/pdf"
+    ></object>
   </div>
 </mat-drawer-container>
