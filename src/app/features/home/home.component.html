@@ -1,23 +1,34 @@
 <mat-toolbar *ngrxLet="pageNumber$ as pageNumber">
-  <span>Docs Populator</span>
+  <ng-container *ngrxLet="populated$ as populated">
+    <span>Docs Populator</span>
 
-  <span class="toolbar-spacer"></span>
-  <button
-    (click)="previousPage()"
-    mat-icon-button
-    [disabled]="pageNumber === 1"
-  >
-    <mat-icon>arrow_back</mat-icon>
-  </button>
-  <span>{{ pageNumber }}</span>
-  <button
-    (click)="nextPage()"
-    *ngrxLet="csvLength$ as csvLength"
-    mat-icon-button
-    [disabled]="pageNumber >= csvLength"
-  >
-    <mat-icon>arrow_forward</mat-icon>
-  </button>
+    <span class="toolbar-spacer"></span>
+
+    <button [disabled]="populated.length === 0" mat-icon-button>
+      <mat-icon>folder_zip</mat-icon>
+    </button>
+
+    <button
+      (click)="previousPage()"
+      [disabled]="pageNumber === 1"
+      mat-icon-button
+    >
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+
+    <span
+      >{{ populated.length === 0 ? 0 : pageNumber }} /
+      {{ populated.length }}</span
+    >
+
+    <button
+      (click)="nextPage()"
+      [disabled]="pageNumber >= populated.length"
+      mat-icon-button
+    >
+      <mat-icon>arrow_forward</mat-icon>
+    </button>
+  </ng-container>
 </mat-toolbar>
 
 <mat-drawer-container autosize>

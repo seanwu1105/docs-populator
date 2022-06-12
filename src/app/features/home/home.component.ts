@@ -12,12 +12,15 @@ import { jsPDF } from 'jspdf'
 import {
   BehaviorSubject,
   combineLatest,
+  concatMap,
   distinctUntilChanged,
   filter,
   map,
   Observable,
+  pairwise,
   startWith,
   switchMap,
+  tap,
 } from 'rxjs'
 
 @Component({
@@ -42,18 +45,13 @@ export class HomeComponent {
     map(data => parse(data, { columns: true }))
   )
 
-  readonly csvLength$ = this.csv$.pipe(
-    map(csv => csv.length),
-    startWith(0)
-  )
-
   private readonly template$ = new BehaviorSubject('')
 
   private readonly pageIndex$ = new BehaviorSubject(0)
 
   readonly pageNumber$ = this.pageIndex$.pipe(map(index => index + 1))
 
-  private readonly populated$ = combineLatest([this.csv$, this.template$]).pipe(
+  readonly populated$ = combineLatest([this.csv$, this.template$]).pipe(
     distinctUntilChanged(),
     filter(([csv, template]) => csv.length > 0 && template.length > 0),
     map(([csv, template]) =>
@@ -64,7 +62,8 @@ export class HomeComponent {
         })
         return result
       })
-    )
+    ),
+    startWith([])
   )
 
   readonly pdf$ = combineLatest([this.populated$, this.pageIndex$]).pipe(
@@ -74,7 +73,9 @@ export class HomeComponent {
         populated.length > 0 && pageNumber < populated.length
     ),
     switchMap(([populated, pageNumber]) => generatePdf(populated[pageNumber])),
-    map(url => this.sanitizer.bypassSecurityTrustResourceUrl(url.toString()))
+    map(url => url.toString()),
+    revokePreviousObjectUrl(),
+    map(url => this.sanitizer.bypassSecurityTrustResourceUrl(url))
   )
 
   constructor(private readonly sanitizer: DomSanitizer) {}
@@ -123,4 +124,16 @@ async function readFileInputEvent(e: Event) {
     }
     fileReader.readAsText(file)
   })
+}
+
+function revokePreviousObjectUrl() {
+  return (source$: Observable<string>) =>
+    source$.pipe(
+      startWith(undefined),
+      pairwise(),
+      tap(([previous]) => {
+        if (previous) URL.revokeObjectURL(previous)
+      }),
+      concatMap(() => source$)
+    )
 }
