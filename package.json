@@ -23,6 +23,7 @@
     "@angular/platform-browser": "^14.0.0",
     "@angular/platform-browser-dynamic": "^14.0.0",
     "@angular/router": "^14.0.0",
+    "@ngrx/component": "^14.0.0-rc.0",
     "csv": "^6.1.0",
     "jspdf": "^2.5.1",
     "rxjs": "~7.5.0",

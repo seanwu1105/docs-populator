@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon'
 import { MatSidenavModule } from '@angular/material/sidenav'
 import { MatToolbarModule } from '@angular/material/toolbar'
 import { DomSanitizer } from '@angular/platform-browser'
+import { LetModule } from '@ngrx/component'
 import { parse } from 'csv/browser/esm/sync'
 import { jsPDF } from 'jspdf'
 import {
@@ -15,6 +16,7 @@ import {
   filter,
   map,
   Observable,
+  startWith,
   switchMap,
 } from 'rxjs'
 
@@ -28,6 +30,7 @@ import {
     MatToolbarModule,
     MatDividerModule,
     MatIconModule,
+    LetModule,
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
@@ -39,9 +42,16 @@ export class HomeComponent {
     map(data => parse(data, { columns: true }))
   )
 
+  readonly csvLength$ = this.csv$.pipe(
+    map(csv => csv.length),
+    startWith(0)
+  )
+
   private readonly template$ = new BehaviorSubject('')
 
-  private readonly pageNumber$ = new BehaviorSubject(0)
+  private readonly pageIndex$ = new BehaviorSubject(0)
+
+  readonly pageNumber$ = this.pageIndex$.pipe(map(index => index + 1))
 
   private readonly populated$ = combineLatest([this.csv$, this.template$]).pipe(
     distinctUntilChanged(),
@@ -57,7 +67,7 @@ export class HomeComponent {
     )
   )
 
-  readonly pdf$ = combineLatest([this.populated$, this.pageNumber$]).pipe(
+  readonly pdf$ = combineLatest([this.populated$, this.pageIndex$]).pipe(
     distinctUntilChanged(),
     filter(
       ([populated, pageNumber]) =>
@@ -70,11 +80,20 @@ export class HomeComponent {
   constructor(private readonly sanitizer: DomSanitizer) {}
 
   async onDataChange(e: Event) {
+    this.pageIndex$.next(0)
     this.data$.next(await readFileInputEvent(e))
   }
 
   async onTemplateChange(e: Event) {
     this.template$.next(await readFileInputEvent(e))
+  }
+
+  nextPage() {
+    this.pageIndex$.next(this.pageIndex$.value + 1)
+  }
+
+  previousPage() {
+    this.pageIndex$.next(this.pageIndex$.value - 1)
   }
 }
 
