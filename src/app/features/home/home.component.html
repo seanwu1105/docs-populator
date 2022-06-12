@@ -4,7 +4,11 @@
 
     <span class="toolbar-spacer"></span>
 
-    <button [disabled]="populated.length === 0" mat-icon-button>
+    <button
+      (click)="downloadZip()"
+      [disabled]="populated.length === 0"
+      mat-icon-button
+    >
       <mat-icon>folder_zip</mat-icon>
     </button>
 

@@ -6,9 +6,12 @@ import { MatIconModule } from '@angular/material/icon'
 import { MatSidenavModule } from '@angular/material/sidenav'
 import { MatToolbarModule } from '@angular/material/toolbar'
 import { DomSanitizer } from '@angular/platform-browser'
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy'
 import { LetModule } from '@ngrx/component'
 import { parse } from 'csv/browser/esm/sync'
+import { saveAs } from 'file-saver'
 import { jsPDF } from 'jspdf'
+import * as JSZip from 'jszip'
 import {
   BehaviorSubject,
   combineLatest,
@@ -23,6 +26,7 @@ import {
   tap,
 } from 'rxjs'
 
+@UntilDestroy({ checkProperties: true })
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -73,7 +77,7 @@ export class HomeComponent {
         populated.length > 0 && pageNumber < populated.length
     ),
     switchMap(([populated, pageNumber]) => generatePdf(populated[pageNumber])),
-    map(url => url.toString()),
+    map(doc => doc.output('bloburl').toString()),
     revokePreviousObjectUrl(),
     map(url => this.sanitizer.bypassSecurityTrustResourceUrl(url))
   )
@@ -96,14 +100,31 @@ export class HomeComponent {
   previousPage() {
     this.pageIndex$.next(this.pageIndex$.value - 1)
   }
+
+  downloadZip() {
+    return this.populated$
+      .pipe(
+        filter(populated => populated.length > 0),
+        switchMap(populated => Promise.all(populated.map(generatePdf))),
+        map(docs => docs.map(doc => doc.output('blob'))),
+        switchMap(blobs => {
+          const zip = new JSZip()
+          blobs.forEach((blob, index) => zip.file(`${index + 1}.pdf`, blob))
+          return zip.generateAsync({ type: 'blob' })
+        }),
+        map(blob => saveAs(blob, 'docs.zip')),
+        untilDestroyed(this)
+      )
+      .subscribe()
+  }
 }
 
 async function generatePdf(html: string) {
   const A4_WIDTH_PX = 800
-  return new Promise<URL>((resolve, _) => {
+  return new Promise<jsPDF>((resolve, _) => {
     const doc = new jsPDF({ unit: 'px', hotfixes: ['px_scaling'] })
     doc.html(html, {
-      callback: doc => resolve(doc.output('bloburl')),
+      callback: doc => resolve(doc),
       windowWidth: A4_WIDTH_PX,
       width: A4_WIDTH_PX,
     })
