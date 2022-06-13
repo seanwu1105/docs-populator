@@ -1,0 +1,50 @@
+name: release
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  gh-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Check if version has been updated
+        id: version_check
+        uses: EndBug/version-check@v2
+        with:
+          diff-search: true
+
+      - name: Install dependencies
+        if: steps.version_check.outputs.changed == 'true'
+        run: npm install
+
+      - name: Build
+        if: steps.version_check.outputs.changed == 'true'
+        run: npm run build
+
+      - name: Zip build files
+        if: steps.version_check.outputs.changed == 'true'
+        run: zip -r -9 build.zip ./dist/
+
+      - name: GitHub release
+        if: steps.version_check.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          name: ${{ steps.version_check.outputs.version }}
+          tag_name: ${{ steps.version_check.outputs.version }}
+          body:
+            Thanks for following along! For more information check out the
+            [CHANGELOG](https://github.com/seanwu1105/docs-populator/blob/master/CHANGELOG.md).
+          files: build.zip
