@@ -18,12 +18,11 @@ import {
   concatMap,
   distinctUntilChanged,
   filter,
+  first,
   map,
   Observable,
-  pairwise,
+  shareReplay,
   startWith,
-  switchMap,
-  tap,
 } from 'rxjs'
 
 @UntilDestroy({ checkProperties: true })
@@ -51,41 +50,44 @@ export class HomeComponent {
 
   private readonly template$ = new BehaviorSubject('')
 
-  private readonly pageIndex$ = new BehaviorSubject(0)
+  private readonly _pageIndex$ = new BehaviorSubject(0)
+
+  private readonly pageIndex$ = this._pageIndex$.pipe(
+    distinctUntilChanged(),
+    shareReplay({ bufferSize: 1, refCount: true })
+  )
 
   readonly pageNumber$ = this.pageIndex$.pipe(map(index => index + 1))
 
   readonly populated$ = combineLatest([this.csv$, this.template$]).pipe(
-    distinctUntilChanged(),
     filter(([csv, template]) => csv.length > 0 && template.length > 0),
     map(([csv, template]) =>
       csv.map(record => {
-        let result = template
+        let result: string = template
         Object.keys(record).forEach(key => {
           result = result.replace(`[[${key}]]`, record[key])
         })
         return result
       })
     ),
-    startWith([])
+    startWith([]),
+    shareReplay({ bufferSize: 1, refCount: true })
   )
 
   readonly pdf$ = combineLatest([this.populated$, this.pageIndex$]).pipe(
-    distinctUntilChanged(),
     filter(
       ([populated, pageNumber]) =>
         populated.length > 0 && pageNumber < populated.length
     ),
-    switchMap(([populated, pageNumber]) => generatePdf(populated[pageNumber])),
+    concatMap(([populated, pageNumber]) => generatePdf(populated[pageNumber])),
     map(doc => doc.output('bloburl').toString()),
-    revokePreviousObjectUrl(),
     map(url => this.sanitizer.bypassSecurityTrustResourceUrl(url))
   )
 
   constructor(private readonly sanitizer: DomSanitizer) {}
 
   async onDataChange(e: Event) {
-    this.pageIndex$.next(0)
+    this._pageIndex$.next(0)
     this.data$.next(await readFileInputEvent(e))
   }
 
@@ -94,20 +96,27 @@ export class HomeComponent {
   }
 
   nextPage() {
-    this.pageIndex$.next(this.pageIndex$.value + 1)
+    this._pageIndex$.next(this._pageIndex$.value + 1)
   }
 
   previousPage() {
-    this.pageIndex$.next(this.pageIndex$.value - 1)
+    this._pageIndex$.next(this._pageIndex$.value - 1)
   }
 
   downloadZip() {
     return this.populated$
       .pipe(
+        first(),
         filter(populated => populated.length > 0),
-        switchMap(populated => Promise.all(populated.map(generatePdf))),
+        concatMap(async populated => {
+          const result = []
+          for await (const p of populated) {
+            result.push(await generatePdf(p))
+          }
+          return result
+        }),
         map(docs => docs.map(doc => doc.output('blob'))),
-        switchMap(blobs => {
+        concatMap(blobs => {
           const zip = new JSZip()
           blobs.forEach((blob, index) => zip.file(`${index + 1}.pdf`, blob))
           return zip.generateAsync({ type: 'blob' })
@@ -123,11 +132,12 @@ async function generatePdf(html: string) {
   const A4_WIDTH_PX = 800
   return new Promise<jsPDF>((resolve, _) => {
     const doc = new jsPDF({ unit: 'px', hotfixes: ['px_scaling'] })
-    doc.html(html, {
-      callback: doc => resolve(doc),
-      windowWidth: A4_WIDTH_PX,
-      width: A4_WIDTH_PX,
-    })
+    doc
+      .html(html, {
+        windowWidth: A4_WIDTH_PX,
+        width: A4_WIDTH_PX,
+      })
+      .then(() => resolve(doc))
   })
 }
 
@@ -145,16 +155,4 @@ async function readFileInputEvent(e: Event) {
     }
     fileReader.readAsText(file)
   })
-}
-
-function revokePreviousObjectUrl() {
-  return (source$: Observable<string>) =>
-    source$.pipe(
-      startWith(undefined),
-      pairwise(),
-      tap(([previous]) => {
-        if (previous) URL.revokeObjectURL(previous)
-      }),
-      concatMap(() => source$)
-    )
 }
