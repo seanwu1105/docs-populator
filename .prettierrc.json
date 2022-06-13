@@ -2,6 +2,7 @@
   "singleQuote": true,
   "arrowParens": "avoid",
   "semi": false,
+  "proseWrap": "always",
 
   "overrides": [
     {

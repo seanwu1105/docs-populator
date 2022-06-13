@@ -1,27 +1,14 @@
-# DocsPopulator
+# [Docs Populator](https://seanwu1105.github.io/docs-populator/)
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.0.1.
+Microsoft Office Mail Merge sucks, so I wrote this to replace it.
 
-## Development server
+## Usage
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+Tool: https://seanwu1105.github.io/docs-populator/
 
-## Code scaffolding
+1. Select a CSV file as the data source.
+2. Select a HTML file as the template.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
-
-## Build
-
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+All data will be populated into the HTML file and generate the output PDFs in a
+zip file. This is an offline tool. No data would be uploaded to the non-existent
+server.
