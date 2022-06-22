@@ -48,6 +48,19 @@
       <button (click)="dataInput.click()" mat-flat-button color="primary">
         Import Data
       </button>
+
+      <mat-table
+        *ngrxLet="columns$ as columns"
+        [dataSource]="csvPreviewDataSource"
+      >
+        <mat-text-column
+          *ngFor="let column of columns"
+          [name]="column"
+        ></mat-text-column>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let myRowData; columns: columns"></tr>
+      </mat-table>
     </div>
 
     <mat-divider></mat-divider>

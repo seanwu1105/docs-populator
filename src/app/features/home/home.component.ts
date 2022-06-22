@@ -1,9 +1,11 @@
+import { CollectionViewer, DataSource } from '@angular/cdk/collections'
 import { CommonModule } from '@angular/common'
 import { Component } from '@angular/core'
 import { MatButtonModule } from '@angular/material/button'
 import { MatDividerModule } from '@angular/material/divider'
 import { MatIconModule } from '@angular/material/icon'
 import { MatSidenavModule } from '@angular/material/sidenav'
+import { MatTableModule } from '@angular/material/table'
 import { MatToolbarModule } from '@angular/material/toolbar'
 import { DomSanitizer } from '@angular/platform-browser'
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy'
@@ -36,6 +38,7 @@ import {
     MatToolbarModule,
     MatDividerModule,
     MatIconModule,
+    MatTableModule,
     LetModule,
   ],
   templateUrl: './home.component.html',
@@ -46,6 +49,13 @@ export class HomeComponent {
 
   private readonly csv$: Observable<Record<string, string>[]> = this.data$.pipe(
     map(data => parse(data, { columns: true }))
+  )
+
+  readonly csvPreviewDataSource = new CsvPreviewDataSource(this.csv$)
+
+  readonly columns$ = this.csv$.pipe(
+    filter(csv => csv.length > 0),
+    map(csv => Object.keys(csv[0]))
   )
 
   private readonly template$ = new BehaviorSubject('')
@@ -155,4 +165,18 @@ async function readFileInputEvent(e: Event) {
     }
     fileReader.readAsText(file)
   })
+}
+
+class CsvPreviewDataSource extends DataSource<Record<string, string>> {
+  constructor(private readonly csv$: Observable<Record<string, string>[]>) {
+    super()
+  }
+
+  // eslint-disable-next-line rxjs/finnish
+  connect(_: CollectionViewer): Observable<readonly Record<string, string>[]> {
+    return this.csv$
+  }
+
+  // eslint-disable-next-line class-methods-use-this, @typescript-eslint/no-empty-function
+  disconnect(_: CollectionViewer): void {}
 }
