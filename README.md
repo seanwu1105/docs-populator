@@ -1,6 +1,6 @@
 # [Docs Populator](https://seanwu1105.github.io/docs-populator/)
 
-Mail Merge sucks, so I wrote this to replace it.
+Mail Merge with HTML and CSV.
 
 ## Usage
 
