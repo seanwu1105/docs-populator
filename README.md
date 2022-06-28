@@ -1,6 +1,6 @@
 # [Docs Populator](https://seanwu1105.github.io/docs-populator/)
 
-Microsoft Office Mail Merge sucks, so I wrote this to replace it.
+Mail Merge sucks, so I wrote this to replace it.
 
 ## Usage
 
